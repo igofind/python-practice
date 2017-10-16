@@ -24,9 +24,9 @@ import traceback
 __tips_prefix = '\n---> '
 
 __urls = [
-    'http://mirror.rohankdd.com//ss.php',
+    # 'http://mirror.rohankdd.com//ss.php',
     'http://mirror.weirch.com//ss.php',
-    'https://ss.rohankdd.com/ss.php',
+    # 'https://ss.rohankdd.com/ss.php',
     'https://ss.weirch.com/ss.php',
 ]
 
@@ -299,16 +299,28 @@ def get_connect(url, headers):
     http_connect = None
     if is_python3():
 
-        import urllib.request
+        try:
+            import urllib.request
+            from urllib.error import HTTPError
 
-        req = urllib.request.Request(url, headers=headers)
-        http_connect = urllib.request.urlopen(req)
+            req = urllib.request.Request(url, headers=headers)
+            http_connect = urllib.request.urlopen(req)
+
+        except HTTPError:
+            print(__tips_prefix + u"地址请求异常，请选择其他镜像或联系开发人员。")
+            # traceback.print_exc(e)
+            sys.exit(-1)
     else:
+        try:
+            import urllib2
 
-        import urllib2
+            req = urllib2.Request(url, headers=headers)
+            http_connect = urllib2.urlopen(req)
+        except urllib2.HTTPError:
+            print(__tips_prefix + u"地址请求异常，请选择其他镜像或联系开发人员。")
+            # traceback.print_exc(e)
+            sys.exit(-1)
 
-        req = urllib2.Request(url, headers=headers)
-        http_connect = urllib2.urlopen(req)
     return http_connect
 
 
