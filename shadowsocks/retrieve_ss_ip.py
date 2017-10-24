@@ -486,6 +486,9 @@ def print_ip_list(ip_geo_list):
         index = str(ip_geo_list.index(item) + 1)
         geo_code = item[0]
         geo_name = get_geo_zh_name(item[0])
+        if geo_name is None:
+            geo_name = u'未知(%s)' % geo_code
+            geo_code = '  '
         geo_ip_sum = str(item[1])
         print(index.center(index_width), geo_code.center(geo_code_width),
               geo_name.center(geo_name_width + (index_width - len(geo_name))), geo_ip_sum.center(geo_ip_width))
