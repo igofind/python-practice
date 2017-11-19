@@ -24,9 +24,8 @@ import traceback
 __tips_prefix = '\n---> '
 
 __urls = [
-    # 'http://mirror.rohankdd.com//ss.php',
+    'https://free-ss.site/ss.php',
     'http://mirror.weirch.com//ss.php',
-    # 'https://ss.rohankdd.com/ss.php',
     'https://ss.weirch.com/ss.php',
 ]
 
