@@ -24,10 +24,15 @@ import traceback
 __tips_prefix = '\n---> '
 
 __urls = [
-    'https://free-ss.site/ss.php',
-    'http://mirror.weirch.com//ss.php',
-    'https://ss.weirch.com/ss.php',
+    'https://free-ss.site/ss.php',  # 新加防止ddos攻击的cdn地址
+    'http://mirror.weirch.com//ss.php',  # 暂时可用
+    # 'https://ss.weirch.com/ss.php', # 不可用
 ]
+
+# ip获取的cdn地址
+__cdn_url = 'https://free-ss.site/'
+# 防ddos检测地址
+__ddos_chk_url = 'https://free-ss.site/cdn-cgi/l/chk_jschl'
 
 # https 网站证书
 __crts = [
@@ -294,38 +299,42 @@ def is_mac():
     return get_platform() == "Darwin"
 
 
-def get_connect(url, headers):
-    http_connect = None
+# 兼容python2和python3的代码
+if is_python3():
+    import urllib.request
+else:
+    import urllib2
+
+
+# 网站加入了防DDos机制，此处获取访问凭证（相当于破解）
+def get_access_credence():
+    headers = get_browser_headers()
     if is_python3():
-
         try:
-            import urllib.request
-            from urllib.error import HTTPError
-
-            req = urllib.request.Request(url, headers=headers)
-            http_connect = urllib.request.urlopen(req)
-
-        except HTTPError:
-            print(__tips_prefix + u"地址请求异常，请选择其他镜像或联系开发人员。")
+            req = urllib.request.Request(__cdn_url, headers=headers)
+            urllib.request.urlopen(req)
+        except urllib.error as e:
+            # print(__tips_prefix + u"地址请求异常，请选择其他镜像或联系开发人员。")
             # traceback.print_exc(e)
-            sys.exit(-1)
+            # sys.exit(-1)
+            cfdguid = e.headers.dict['set-cookie']
+            req = urllib.request.Request(__ddos_chk_url, headers=headers)
+
     else:
         try:
-            import urllib2
-
-            req = urllib2.Request(url, headers=headers)
-            http_connect = urllib2.urlopen(req)
-        except urllib2.HTTPError:
-            print(__tips_prefix + u"地址请求异常，请选择其他镜像或联系开发人员。")
+            req = urllib2.Request(__cdn_url, headers=headers)
+            urllib2.urlopen(req)
+        except urllib2.HTTPError as e:
+            # print(__tips_prefix + u"地址请求异常，请选择其他镜像或联系开发人员。")
             # traceback.print_exc(e)
-            sys.exit(-1)
+            # sys.exit(-1)
+            cfdguid = e.headers.dict['set-cookie']
 
-    return http_connect
+    return cfdguid
 
 
-def wget(url_idx):
-    url = __urls[url_idx - 1] + '?_=' + str(timestamp())
-    headers = {
+def get_browser_headers():
+    return {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
         'Accept': 'application/json, text/javascript, */*; q=0.01',
         'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
@@ -335,16 +344,16 @@ def wget(url_idx):
         'Connection': 'keep-alive',
         'Method': 'GET'
     }
-    # 请求时添加证书（暂不可用）
-    # if url_idx - 1 < len(__crts):
-    #     headers['X-Mashape-Key'] = __crts[0]
-    return get_connect(url, headers).read()
+
+
+def get_access_credence(url_idx):
+    pass
 
 
 # 获取IP
 def retrieve_ips(url_idx):
-    return json.loads(wget(url_idx))['data']
-
+    # return json.loads(get_connect(url_idx))['data']
+    pass
 
 # shadowsocks 的默认配置
 def default_config():
