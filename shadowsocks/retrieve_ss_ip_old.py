@@ -20,17 +20,58 @@ import platform
 import sys
 import time
 import traceback
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import WebDriverException
 
 __tips_prefix = '\n---> '
 
 __urls = [
     'http://mirror.weirch.com/ss.json',
-    'https://free-ss.site/ss.json',
+    # 'https://free-ss.site/ss.php',
     # 'https://ss.weirch.com/ss.json',
+]
+
+# https 网站证书
+__crts = [
+    '''
+        -----BEGIN CERTIFICATE-----
+    MIIGyjCCBnGgAwIBAgIRAN6nvY3zGoMq6V1y0DpCjMIwCgYIKoZIzj0EAwIwgZIx
+    CzAJBgNVBAYTAkdCMRswGQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNV
+    BAcTB1NhbGZvcmQxGjAYBgNVBAoTEUNPTU9ETyBDQSBMaW1pdGVkMTgwNgYDVQQD
+    Ey9DT01PRE8gRUNDIERvbWFpbiBWYWxpZGF0aW9uIFNlY3VyZSBTZXJ2ZXIgQ0Eg
+    MjAeFw0xNzEwMTAwMDAwMDBaFw0xODA0MTgyMzU5NTlaMGwxITAfBgNVBAsTGERv
+    bWFpbiBDb250cm9sIFZhbGlkYXRlZDEhMB8GA1UECxMYUG9zaXRpdmVTU0wgTXVs
+    dGktRG9tYWluMSQwIgYDVQQDExtzbmkxODY3ODEuY2xvdWRmbGFyZXNzbC5jb20w
+    WTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQTdELB57NRa2jKYvvftEsNQBfY+S1x
+    kWp67LeCIhHW2PDLt5CKiFEedhFTZq0YCFgq4p0/6Vjyo4R4SMhS5xQGo4IEyzCC
+    BMcwHwYDVR0jBBgwFoAUQAlhZ/C8g3FP3hIILG/U1Ct2PZYwHQYDVR0OBBYEFNl9
+    eulk+++F0TihdrOuKlRd9RWQMA4GA1UdDwEB/wQEAwIHgDAMBgNVHRMBAf8EAjAA
+    MB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjBPBgNVHSAESDBGMDoGCysG
+    AQQBsjEBAgIHMCswKQYIKwYBBQUHAgEWHWh0dHBzOi8vc2VjdXJlLmNvbW9kby5j
+    b20vQ1BTMAgGBmeBDAECATBWBgNVHR8ETzBNMEugSaBHhkVodHRwOi8vY3JsLmNv
+    bW9kb2NhNC5jb20vQ09NT0RPRUNDRG9tYWluVmFsaWRhdGlvblNlY3VyZVNlcnZl
+    ckNBMi5jcmwwgYgGCCsGAQUFBwEBBHwwejBRBggrBgEFBQcwAoZFaHR0cDovL2Ny
+    dC5jb21vZG9jYTQuY29tL0NPTU9ET0VDQ0RvbWFpblZhbGlkYXRpb25TZWN1cmVT
+    ZXJ2ZXJDQTIuY3J0MCUGCCsGAQUFBzABhhlodHRwOi8vb2NzcC5jb21vZG9jYTQu
+    Y29tMIIDEgYDVR0RBIIDCTCCAwWCG3NuaTE4Njc4MS5jbG91ZGZsYXJlc3NsLmNv
+    bYIMKi5hcHB0aWMubmV0gg8qLmRlYWRtZXRydTkudGuCDyouZGlncmh5bWVzLnh5
+    eoIVKi5kaWtvbS1nZXNjaGVua2VuLm5sggwqLmV0cGJvb2suY2aCHCouZmFudGFz
+    dGljdm9yc2ljaHRpZy5zdHJlYW2CDCouZmFzdGdmLmNvbYIQKi5nZW9yZ2lhd2F5
+    LndpboIUKi5pbmZvcm1hdGlvbmFzLmxvYW6CFSoubWVmdS5hbHRlcnZpc3RhLm9y
+    Z4INKi5tb25kZW96LmNvbYIRKi5vbmJvb2tuZXh0LmluZm+CDSoub3dlY29ya2Yu
+    Y2aCDioucm9oYW5rZGQuY29tghAqLnNlbGwtcWNtZHpxLm1sgg0qLnNreXJvZ3Vl
+    LmdhghIqLnNvbGFyZHJlYW0uc3BhY2WCEyoudGFya29uZ2JlY2hlcy54eXqCFSou
+    dWNyZml1bWVwdGZtYWFmZy5tbIILKi51c2FpbmEudGuCCyoudmNwb3YuY29tggwq
+    LndlaXJjaC5jb22CCmFwcHRpYy5uZXSCDWRlYWRtZXRydTkudGuCDWRpZ3JoeW1l
+    cy54eXqCE2Rpa29tLWdlc2NoZW5rZW4ubmyCCmV0cGJvb2suY2aCGmZhbnRhc3Rp
+    Y3ZvcnNpY2h0aWcuc3RyZWFtggpmYXN0Z2YuY29tgg5nZW9yZ2lhd2F5LndpboIS
+    aW5mb3JtYXRpb25hcy5sb2FughNtZWZ1LmFsdGVydmlzdGEub3Jnggttb25kZW96
+    LmNvbYIPb25ib29rbmV4dC5pbmZvggtvd2Vjb3JrZi5jZoIMcm9oYW5rZGQuY29t
+    gg5zZWxsLXFjbWR6cS5tbIILc2t5cm9ndWUuZ2GCEHNvbGFyZHJlYW0uc3BhY2WC
+    EXRhcmtvbmdiZWNoZXMueHl6ghN1Y3JmaXVtZXB0Zm1hYWZnLm1sggl1c2FpbmEu
+    dGuCCXZjcG92LmNvbYIKd2VpcmNoLmNvbTAKBggqhkjOPQQDAgNHADBEAiAA75Zd
+    bA8Cq+hYw5a0KxCBKBJLpbdJt8NG7eld/+r6MAIgKNuBnrZVD5QbupoxFGDsTxFF
+    jJ/DRkPxpc2B564fCIc=
+    -----END CERTIFICATE-----
+    '''
 ]
 
 # 国家简称
@@ -254,6 +295,7 @@ def is_mac():
 
 
 def get_connect(url, headers):
+    http_connect = None
     if is_python3():
 
         try:
@@ -301,29 +343,7 @@ def wget(url_idx):
 
 # 获取IP
 def retrieve_ips(url_idx):
-    url = __urls[url_idx - 1]
-    if url.count(".site") > 0:
-        print(u"注意：当前选择的地址加入了防DDos机制，程序将借助Chrome浏览器相关功能获取IP。\n")
-        return json.loads(retrieve_ips_cdn(url))['data']
-
     return json.loads(wget(url_idx))['data']
-
-
-# 防DDos网址获取IP的方式
-def retrieve_ips_cdn(url):
-    chrome = webdriver.Chrome()
-    chrome.get(url)
-    try:
-        # 页面跳转后 title为空
-        WebDriverWait(chrome, 10).until(EC.title_is(""))
-        page = chrome.page_source
-        chrome.quit()
-        return page[page.index('{"'): page.index('</pre>')]
-    except WebDriverException as e:
-        print(u"程序异常，请检查网络或联系管理员。")
-        print(e.msg)
-        chrome.quit()
-        sys.exit(-1)
 
 
 # shadowsocks 的默认配置
